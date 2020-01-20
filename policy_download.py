@@ -157,16 +157,20 @@ def szukanie_danych():
             try:
                 przypis = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset:nth-child(2) > table > tbody > tr > td:nth-child(2)').text
                 tel = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(10) > td.td-field-long').text
+                tel1 = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(14) > td.td-field-long').text
+
                 ter_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset:nth-child(2) > table > tbody > tr > td:nth-child(4)').text
-                f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(6) > td.td-field-long').text
+                # f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(6) > td.td-field-long').text
             except:
                 # przypis = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(6) > td.td-field-long').text
                 tel = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(14) > td.td-field-long').text
                 # ter_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(11) > td.td-field-long').text
-                f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(10) > td.td-field-long').text
+                # f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(10) > td.td-field-long').text
 
-            tel = f_platnosci if 'PRZELEW' in tel else tel
-            p_czy_g = 'P' if 'Przelew' in driver.page_source.text else 'G'
+            if tel == 'PRZELEW':
+                tel = tel1
+
+            p_czy_g = 'P' if 'Przelew' in driver.page_source else 'G'
 
             ilosc_rat = '1' if 'JEDNORAZOWA' in driver.page_source or 'jednorazowej' in driver.page_source else ''
             nr_raty = '1' if ilosc_rat else ''
