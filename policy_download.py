@@ -15,13 +15,16 @@ import win32com.client
 from win32com.client import Dispatch
 import datetime
 
+
 wb = load_workbook(filename="M:\\Agent baza\Login_Hasło.xlsx", read_only=True)
 ws = wb['Arkusz1']
 tuz_l = ws['F57'].value
 tuz_h = ws['G57'].value
 
-
 """CHROME"""
+n = int(input('Wpisz ilość polis do zarejestrowania: '))
+
+
 def chrome_ustawienia():
     """Chrome ustawienia"""
     options = webdriver.ChromeOptions()
@@ -42,7 +45,6 @@ def tuz_logowanie(driver):
     haslo.send_keys(tuz_h)
     driver.find_element_by_css_selector('.form-submit').click()
 
-    # return driver
 
 def lista_polis():
     """Przejście do listy polis Marka"""
@@ -52,22 +54,26 @@ def lista_polis():
     driver.find_element_by_id('register_name').send_keys('wołowski')
     driver.find_element_by_id('search_handler').click()
 
-    # return driver
-
-# print(driver.page_source)
-# WebDriverWait(driver, 3).until(EC.presence_of_element_located(By.CSS_SELECTOR, "#contracts > tbody > tr:nth-child(3) > td:nth-child(8) > a:nth-child(1) > input")).click()
 
 def kolejna_polisa():
     """Klika w dane każdej polisy"""
     try:
-        for i in range(25, 0, -1):
-            if i > 0:
-                driver.find_element_by_css_selector('#contracts > tbody > tr:nth-child(' + str(i) + ') > td:nth-child(8) > a:nth-child(1) > input').click()
+
+        for i in range(n, 0, -1):
+            if 50 < i <= 75:
+                WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
+                c = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 50) + ') > td:nth-child(8) > a:nth-child(1) > input')))
+                c.click()
                 yield driver
-            # elif 25 < i < 50:
-            #     driver.find_element_by_id('contracts_next').click()
-            #     driver.find_element_by_css_selector('#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(8) > a:nth-child(1) > input').click()
-            #     yield driver
+            elif 25 < i <= 50:
+                WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(8) > a:nth-child(1) > input'))).click()
+                yield driver
+            elif 0 < i:
+                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i) + ') > td:nth-child(8) > a:nth-child(1) > input'))).click()
+                yield driver
+
 
     except Exception as err:
         print(err)
@@ -77,7 +83,7 @@ def szukanie_danych():
     """"""
     try:
         for _ in kolejna_polisa():
-            seria_polisy = driver.find_element_by_css_selector('#main > div > div.mybox > h1 > table > tbody > tr > td:nth-child(1) > nobr').text
+            seria_polisy = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#main > div > div.mybox > h1 > table > tbody > tr > td:nth-child(1) > nobr'))).text
             polisa_nr = driver.find_element_by_css_selector('#main > div > div.mybox > h1 > table > tbody > tr > td:nth-child(1) > nobr').text
             nr_polisy = seria_polisy[-11:-8] + polisa_nr[-7:]
 
@@ -89,10 +95,21 @@ def szukanie_danych():
             except:
                 pass
 
+            data_zawarcia = ''
             if 'KOS' in seria_polisy:
-                data_zawarcia = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
+                try:
+                    data_zawarcia = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(2)'))).text
+                    # data_zawarcia = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
+                    data_zawarcia = datetime.datetime.strptime(data_zawarcia[2:], '%y-%m-%d')
+                except:
+                    pass
+
             else:
-                data_zawarcia = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(4)').text
+                try:
+                    data_zawarcia = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(4)').text
+                    data_zawarcia = datetime.datetime.strptime(data_zawarcia[2:], '%y-%m-%d')
+                except:
+                    pass
 
             nowa_wzn_kos = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(4)').text
             nowa_wzn_brs = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(1) > td:nth-child(2)').text
@@ -135,78 +152,68 @@ def szukanie_danych():
             rok_prod = driver.find_element_by_css_selector('#tabs-objects > div > fieldset > fieldset > table > tbody > tr:nth-child(3) > td:nth-child(2)').text
 
             driver.find_element_by_id('ui-id-4').click()
-
+            data_pocz = ''
+            data_konca = ''
             try:
                 data_pocz = driver.find_element_by_css_selector('#clone_productobject_55381_179227_ > div > fieldset > fieldset > fieldset > fieldset > table > tbody > tr:nth-child(2) > td:nth-child(2)').text
+                data_pocz = datetime.datetime.strptime(data_pocz[2:], '%y-%m-%d')
                 data_konca = driver.find_element_by_css_selector('#clone_productobject_55381_179227_ > div > fieldset > fieldset > fieldset > fieldset > table > tbody > tr:nth-child(2) > td:nth-child(4)').text
+                data_konca = datetime.datetime.strptime(data_konca[2:], '%y-%m-%d')
             except:
                 driver.find_element_by_id('ui-id-1').click()
-                data_pocz = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(2) > td:nth-child(2)').text
-                data_konca = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(2) > td:nth-child(4)').text
+                try:
+                    data_pocz = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(2) > td:nth-child(2)').text
+                    data_pocz = datetime.datetime.strptime(data_pocz[2:], '%y-%m-%d')
+                except:
+                    pass
+                try:
+                    data_konca = driver.find_element_by_css_selector('#tabs-packages > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(2) > td:nth-child(4)').text
+                    data_konca = datetime.datetime.strptime(data_konca[2:], '%y-%m-%d')
+                except:
+                    pass
 
             driver.find_element_by_id('ui-id-4').click()
 
-            # try:
-            #     przypis = driver.find_element_by_css_selector('#clone_productobject_55381_179227_ > div > fieldset > fieldset > fieldset > fieldset > table > tbody > tr:nth-child(5) > td:nth-child(4)').text
-            # except:
-            #     pass
             rodzaj = 'kom' if 'KOS' in seria_polisy else 'rol'
 
             driver.find_element_by_id('ui-id-5').click()
-            przypis, ter_platnosci = '', ''
+
+            przypis = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset:nth-child(2) > table > tbody > tr > td:nth-child(2)').text
+            tel = ''
+            tel_szukaj = driver.find_elements_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody ')
+            for i in tel_szukaj:
+                tel = i.text.split('\n')[-1]
+
+            ter_platnosci = ''
             try:
-                przypis = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset:nth-child(2) > table > tbody > tr > td:nth-child(2)').text
-                tel = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(10) > td.td-field-long').text
-                tel1 = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(14) > td.td-field-long').text
-
                 ter_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset:nth-child(2) > table > tbody > tr > td:nth-child(4)').text
-                # f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(6) > td.td-field-long').text
+                ter_platnosci = datetime.datetime.strptime(ter_platnosci[2:], '%y-%m-%d')
             except:
-                # przypis = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(6) > td.td-field-long').text
-                tel = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(14) > td.td-field-long').text
-                # ter_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(11) > td.td-field-long').text
-                # f_platnosci = driver.find_element_by_css_selector('#tabs-tariff > fieldset > fieldset.group_qual.fieldset_noborder > table > tbody > tr:nth-child(10) > td.td-field-long').text
-
-            if tel == 'PRZELEW':
-                tel = tel1
+                pass
 
             p_czy_g = 'P' if 'Przelew' in driver.page_source else 'G'
-
             ilosc_rat = '1' if 'JEDNORAZOWA' in driver.page_source or 'jednorazowej' in driver.page_source else ''
             nr_raty = '1' if ilosc_rat else ''
 
             driver.execute_script("window.history.go(-1)")
-            # time.sleep(1.5)
             driver.find_element_by_id('search_handler').click()
 
-            # yield seria_polisy, nr_polisy, data_zawarcia, nowa_wzn, nazwisko, imie, pesel, data_pr_j, adres, \
-            #        kod_poczt, miasto, marka, model, nr_rej, rok_prod, data_pocz,  data_konca, przypis, rodzaj, \
-            #        tel, ter_platnosci, f_platnosci, p_czy_g, ilosc_rat, nr_raty
 
-    # except Exception as err :
-    #     print(err)
-    # time.sleep(9000)
-
-
-# def zapis_excel(seria_polisy, nr_polisy, data_zawarcia, nowa_wzn, nazwisko, imie, pesel, data_pr_j, adres, \
-#     kod_poczt, miasto, marka, model, nr_rej, rok_prod, data_pocz, data_konca, przypis, rodzaj, \
-#     tel, ter_platnosci, f_platnosci, p_czy_g, ilosc_rat, nr_raty) -> None:
             """Zapisanie w Bazie"""
             path = os.getcwd()
-    # try:
-        # for _ in szuknie_danych():
+
             # Sprawdza czy arkusz jest otwarty
             try:
                 ExcelApp = win32com.client.GetActiveObject('Excel.Application')
                 wb = ExcelApp.Workbooks("TESTY_tuz.xlsx")
-                ws = wb.Worksheets("Arkusz1")
+                # ws = wb.Worksheets("Arkusz1")
                 # workbook = ExcelApp.Workbooks("Baza.xlsx")
 
             # Jeżeli arkusz jest zamknięty, otwiera go
             except:
                 ExcelApp = Dispatch("Excel.Application")
                 wb = ExcelApp.Workbooks.Open(path + "\\TESTY_tuz.xlsx")
-                ws = wb.Worksheets("Arkusz1")
+                # ws = wb.Worksheets("Arkusz1")
 
             row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 12).End(-4162).Row + 1
 
@@ -220,7 +227,7 @@ def szukanie_danych():
             ExcelApp.Cells(row_to_write, 16).Value = adres
             ExcelApp.Cells(row_to_write, 17).Value = kod_poczt
             ExcelApp.Cells(row_to_write, 18).Value = miasto
-            ExcelApp.Cells(row_to_write, 19).Value = tel
+            ExcelApp.Cells(row_to_write, 19).Value = tel if not re.search('[A-z]', tel) else ''
             # ExcelApp.Cells(row_to_write, 20).Value = email
             ExcelApp.Cells(row_to_write, 23).Value = marka if 'KOS' in seria_polisy else ''
             ExcelApp.Cells(row_to_write, 24).Value = model if 'KOS' in seria_polisy else ''
@@ -228,9 +235,9 @@ def szukanie_danych():
             ExcelApp.Cells(row_to_write, 26).Value = rok_prod if 'KOS' in seria_polisy else ''
             # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
 
-            ExcelApp.Cells(row_to_write, 30).Value = datetime.datetime.strptime(data_zawarcia[2:], '%y-%m-%d')
-            ExcelApp.Cells(row_to_write, 31).Value = datetime.datetime.strptime(data_pocz[2:], '%y-%m-%d')
-            ExcelApp.Cells(row_to_write, 32).Value = datetime.datetime.strptime(data_konca[2:], '%y-%m-%d')
+            ExcelApp.Cells(row_to_write, 30).Value = data_zawarcia
+            ExcelApp.Cells(row_to_write, 31).Value = data_pocz
+            ExcelApp.Cells(row_to_write, 32).Value = data_konca
             ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
             ExcelApp.Cells(row_to_write, 37).Value = 'TUZ'
             ExcelApp.Cells(row_to_write, 38).Value = 'TUZ'
@@ -240,14 +247,14 @@ def szukanie_danych():
             ExcelApp.Cells(row_to_write, 42).Value = nr_polisy_wzn
             # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
             ExcelApp.Cells(row_to_write, 48).Value = przypis.strip(' PLN')
-            ExcelApp.Cells(row_to_write, 49).Value = datetime.datetime.strptime(ter_platnosci[2:], '%y-%m-%d')
+            ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
 
             ExcelApp.Cells(row_to_write, 50).Value = przypis.strip(' PLN')
             ExcelApp.Cells(row_to_write, 51).Value = p_czy_g
 
             ExcelApp.Cells(row_to_write, 52).Value = nr_raty
             ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
-            ExcelApp.Cells(row_to_write, 54).Value = datetime.datetime.strptime(ter_platnosci[2:], '%y-%m-%d')
+            ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
             ExcelApp.Cells(row_to_write, 55).Value = przypis.strip(' PLN')
             ExcelApp.Cells(row_to_write, 59).Value = 'TUZ'
 
@@ -257,7 +264,8 @@ def szukanie_danych():
 
     except Exception as err:
         print(err)
-        time.sleep(9000)
+        pass
+        # time.sleep(9000)
 
 try:
     driver = chrome_ustawienia()
@@ -265,13 +273,6 @@ try:
     lista_polis()
     kolejna_polisa()
     szukanie_danych()
-    # seria_polisy, nr_polisy, data_zawarcia, nowa_wzn, nazwisko, imie, pesel, data_pr_j, adres, \
-    # kod_poczt, miasto, marka, model, nr_rej, rok_prod, data_pocz, data_konca, przypis, rodzaj, \
-    # tel, ter_platnosci, f_platnosci, p_czy_g, ilosc_rat, nr_raty = szuknie_danych()
-
-    # zapis_excel(seria_polisy, nr_polisy, data_zawarcia, nowa_wzn, nazwisko, imie, pesel, data_pr_j, adres, \
-    # kod_poczt, miasto, marka, model, nr_rej, rok_prod, data_pocz, data_konca, przypis, rodzaj, \
-    # tel, ter_platnosci, f_platnosci, p_czy_g, ilosc_rat, nr_raty)
 
 except:
     print('Błąd')
