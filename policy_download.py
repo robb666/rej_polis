@@ -58,20 +58,29 @@ def lista_polis():
 def kolejna_polisa():
     """Klika w dane każdej polisy"""
     try:
-
         for i in range(n, 0, -1):
             if 50 < i <= 75:
                 WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
                 WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
-                c = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 50) + ') > td:nth-child(8) > a:nth-child(1) > input')))
-                c.click()
+                ccc = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 50) + ') > td:nth-child(8) > a:nth-child(1) > input')))
+                ccc.click()
                 yield driver
+
             elif 25 < i <= 50:
-                WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
-                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(8) > a:nth-child(1) > input'))).click()
+                try:
+                    WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.ID, 'contracts_next'))).click()
+                    cc = WebDriverWait(driver, 9).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(8) > a:nth-child(1) > input')))
+                    cc.click()
+                except:
+                    ser = driver.find_element_by_css_selector('#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(1)').text
+                    nr = driver.find_element_by_css_selector('#contracts > tbody > tr:nth-child(' + str(i - 25) + ') > td:nth-child(2)').text
+                    print(f'NIE Zapisał {ser}{nr}')
+                    # pass
                 yield driver
+
             elif 0 < i:
-                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i) + ') > td:nth-child(8) > a:nth-child(1) > input'))).click()
+                c = WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#contracts > tbody > tr:nth-child(' + str(i) + ') > td:nth-child(8) > a:nth-child(1) > input')))
+                c.click()
                 yield driver
 
 
@@ -83,6 +92,7 @@ def szukanie_danych():
     """"""
     try:
         for _ in kolejna_polisa():
+
             seria_polisy = WebDriverWait(driver, 3).until(EC.element_to_be_clickable((By.CSS_SELECTOR, '#main > div > div.mybox > h1 > table > tbody > tr > td:nth-child(1) > nobr'))).text
             polisa_nr = driver.find_element_by_css_selector('#main > div > div.mybox > h1 > table > tbody > tr > td:nth-child(1) > nobr').text
             nr_polisy = seria_polisy[-11:-8] + polisa_nr[-7:]
@@ -198,74 +208,75 @@ def szukanie_danych():
             driver.execute_script("window.history.go(-1)")
             driver.find_element_by_id('search_handler').click()
 
-
-            """Zapisanie w Bazie"""
-            path = os.getcwd()
-
-            # Sprawdza czy arkusz jest otwarty
-            try:
-                ExcelApp = win32com.client.GetActiveObject('Excel.Application')
-                wb = ExcelApp.Workbooks("TESTY_tuz.xlsx")
-                # ws = wb.Worksheets("Arkusz1")
-                # workbook = ExcelApp.Workbooks("Baza.xlsx")
-
-            # Jeżeli arkusz jest zamknięty, otwiera go
-            except:
-                ExcelApp = Dispatch("Excel.Application")
-                wb = ExcelApp.Workbooks.Open(path + "\\TESTY_tuz.xlsx")
-                # ws = wb.Worksheets("Arkusz1")
-
-            row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 12).End(-4162).Row + 1
-
-            ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
-            ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
-            # ExcelApp.Cells(row_to_write, 11).Value = firma
-            ExcelApp.Cells(row_to_write, 12).Value = nazwisko
-            ExcelApp.Cells(row_to_write, 13).Value = imie
-            ExcelApp.Cells(row_to_write, 14).Value = 'p' + pesel
-            ExcelApp.Cells(row_to_write, 15).Value = data_pr_j
-            ExcelApp.Cells(row_to_write, 16).Value = adres
-            ExcelApp.Cells(row_to_write, 17).Value = kod_poczt
-            ExcelApp.Cells(row_to_write, 18).Value = miasto
-            ExcelApp.Cells(row_to_write, 19).Value = tel if not re.search('[A-z]', tel) else ''
-            # ExcelApp.Cells(row_to_write, 20).Value = email
-            ExcelApp.Cells(row_to_write, 23).Value = marka if 'KOS' in seria_polisy else ''
-            ExcelApp.Cells(row_to_write, 24).Value = model if 'KOS' in seria_polisy else ''
-            ExcelApp.Cells(row_to_write, 25).Value = nr_rej if 'KOS' in seria_polisy else ''
-            ExcelApp.Cells(row_to_write, 26).Value = rok_prod if 'KOS' in seria_polisy else ''
-            # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
-
-            ExcelApp.Cells(row_to_write, 30).Value = data_zawarcia
-            ExcelApp.Cells(row_to_write, 31).Value = data_pocz
-            ExcelApp.Cells(row_to_write, 32).Value = data_konca
-            ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
-            ExcelApp.Cells(row_to_write, 37).Value = 'TUZ'
-            ExcelApp.Cells(row_to_write, 38).Value = 'TUZ'
-            ExcelApp.Cells(row_to_write, 39).Value = rodzaj
-            ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
-            ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
-            ExcelApp.Cells(row_to_write, 42).Value = nr_polisy_wzn
-            # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
-            ExcelApp.Cells(row_to_write, 48).Value = przypis.strip(' PLN')
-            ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
-
-            ExcelApp.Cells(row_to_write, 50).Value = przypis.strip(' PLN')
-            ExcelApp.Cells(row_to_write, 51).Value = p_czy_g
-
-            ExcelApp.Cells(row_to_write, 52).Value = nr_raty
-            ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
-            ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
-            ExcelApp.Cells(row_to_write, 55).Value = przypis.strip(' PLN')
-            ExcelApp.Cells(row_to_write, 59).Value = 'TUZ'
-
-            wb.Save()
-            print(f'Zapisał {nazwisko} {nr_polisy}')
+    except:
+        nazwisko, imie, pesel, data_pr_j, adres, kod_poczt, miasto, tel, marka, seria_polisy, \
+        model, nr_rej, rok_prod, data_zawarcia, data_pocz, data_konca, rodzaj, nr_polisy, nowa_wzn, \
+        nr_polisy_wzn, przypis, ter_platnosci, p_czy_g, nr_raty, ilosc_rat = \
+            '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '',
 
 
-    except Exception as err:
-        print(err)
-        pass
-        # time.sleep(9000)
+
+    """Zapisanie w Bazie"""
+    path = os.getcwd()
+
+    # Sprawdza czy arkusz jest otwarty
+    try:
+        ExcelApp = win32com.client.GetActiveObject('Excel.Application')
+        wb = ExcelApp.Workbooks("TESTY_tuz.xlsx")
+        # ws = wb.Worksheets("Arkusz1")
+        # workbook = ExcelApp.Workbooks("Baza.xlsx")
+
+    # Jeżeli arkusz jest zamknięty, otwiera go
+    except:
+        ExcelApp = Dispatch("Excel.Application")
+        wb = ExcelApp.Workbooks.Open(path + "\\TESTY_tuz.xlsx")
+        # ws = wb.Worksheets("Arkusz1")
+
+    row_to_write = wb.Worksheets(1).Cells(wb.Worksheets(1).Rows.Count, 12).End(-4162).Row + 1
+
+    ExcelApp.Cells(row_to_write, 7).Value = 'Robert'
+    ExcelApp.Cells(row_to_write, 10).Value = 'Grzelak'
+    # ExcelApp.Cells(row_to_write, 11).Value = firma
+    ExcelApp.Cells(row_to_write, 12).Value = nazwisko
+    ExcelApp.Cells(row_to_write, 13).Value = imie
+    ExcelApp.Cells(row_to_write, 14).Value = 'p' + pesel
+    ExcelApp.Cells(row_to_write, 15).Value = data_pr_j
+    ExcelApp.Cells(row_to_write, 16).Value = adres
+    ExcelApp.Cells(row_to_write, 17).Value = kod_poczt
+    ExcelApp.Cells(row_to_write, 18).Value = miasto
+    ExcelApp.Cells(row_to_write, 19).Value = tel if not re.search('[A-z]', tel) else ''
+    # ExcelApp.Cells(row_to_write, 20).Value = email
+    ExcelApp.Cells(row_to_write, 23).Value = marka if 'KOS' in seria_polisy else ''
+    ExcelApp.Cells(row_to_write, 24).Value = model if 'KOS' in seria_polisy else ''
+    ExcelApp.Cells(row_to_write, 25).Value = nr_rej if 'KOS' in seria_polisy else ''
+    ExcelApp.Cells(row_to_write, 26).Value = rok_prod if 'KOS' in seria_polisy else ''
+    # ExcelApp.Cells(row_to_write, 29).Value = int(ile_dni) + 1
+    ExcelApp.Cells(row_to_write, 30).Value = data_zawarcia
+    ExcelApp.Cells(row_to_write, 31).Value = data_pocz
+    ExcelApp.Cells(row_to_write, 32).Value = data_konca
+    ExcelApp.Cells(row_to_write, 36).Value = 'SPÓŁKA'
+    ExcelApp.Cells(row_to_write, 37).Value = 'TUZ'
+    ExcelApp.Cells(row_to_write, 38).Value = 'TUZ'
+    ExcelApp.Cells(row_to_write, 39).Value = rodzaj
+    ExcelApp.Cells(row_to_write, 40).Value = nr_polisy
+    ExcelApp.Cells(row_to_write, 41).Value = nowa_wzn
+    ExcelApp.Cells(row_to_write, 42).Value = nr_polisy_wzn
+    # ryzyko = ExcelApp.Cells(row_to_write, 46).Value = 'b/d'
+    ExcelApp.Cells(row_to_write, 48).Value = przypis.strip(' PLN')
+    ExcelApp.Cells(row_to_write, 49).Value = ter_platnosci
+    ExcelApp.Cells(row_to_write, 50).Value = przypis.strip(' PLN')
+    ExcelApp.Cells(row_to_write, 51).Value = p_czy_g
+    ExcelApp.Cells(row_to_write, 52).Value = nr_raty
+    ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
+    ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
+    ExcelApp.Cells(row_to_write, 55).Value = przypis.strip(' PLN')
+    ExcelApp.Cells(row_to_write, 59).Value = 'TUZ'
+
+    wb.Save()
+    if nazwisko:
+        print(f'Zapisał {nazwisko} {nr_polisy}')
+
+
 
 try:
     driver = chrome_ustawienia()
