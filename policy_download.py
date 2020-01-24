@@ -13,6 +13,7 @@ import io
 import re
 import win32com.client
 from win32com.client import Dispatch
+import win32timezone
 import datetime
 
 
@@ -167,6 +168,7 @@ def szukanie_danych():
             driver.find_element_by_id('ui-id-4').click()
             data_pocz = ''
             data_konca = ''
+
             try:
                 data_pocz = driver.find_element_by_css_selector('#clone_productobject_55381_179227_ > div > fieldset > fieldset > fieldset > fieldset > table > tbody > tr:nth-child(2) > td:nth-child(2)').text
                 data_pocz = datetime.datetime.strptime(data_pocz[2:], '%y-%m-%d')
@@ -233,6 +235,7 @@ def szukanie_danych():
         # Jeżeli arkusz jest zamknięty, otwiera go
         except:
             ExcelApp = Dispatch("Excel.Application")
+            # wb = ExcelApp.Workbooks.Add('marek_tuz.xlsx')
             wb = ExcelApp.Workbooks.Open(path + "\\marek_tuz.xlsx")
             # ws = wb.Worksheets("Arkusz1")
 
@@ -274,12 +277,14 @@ def szukanie_danych():
         ExcelApp.Cells(row_to_write, 53).Value = ilosc_rat
         ExcelApp.Cells(row_to_write, 54).Value = ter_platnosci
         ExcelApp.Cells(row_to_write, 55).Value = przypis.strip(' PLN')
-        ExcelApp.Cells(row_to_write, 59).Value = 'TUZ'
+        ExcelApp.Cells(row_to_write, 60).Value = 'TUZ'
 
         wb.Save()
         wb.Close()
         if nazwisko:
             print(f'Zapisał {nazwisko} {nr_polisy}')
+        else:
+            print(f'NIE Zapisał {nr_polisy}')
 
 
 
@@ -290,7 +295,9 @@ try:
     kolejna_polisa()
     szukanie_danych()
 
-except:
-    print('Błąd')
+except Exception as err:
+    print(f'Błąd {err}')
     pass
 time.sleep(9000)
+
+# Use this to build the exe: pyinstaller --hiddenimport win32timezone -F a.py
